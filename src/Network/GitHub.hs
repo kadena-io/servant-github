@@ -46,16 +46,12 @@ module Network.GitHub
     , getCommit
     , getContent
     , getIssues
-    , integrationJWT
-    , reqInstallationAccessToken
     , gists
     , editGist
     , createGist
     -- * GitHub monad
     -- $github
     , GitHub
-    , runGitHubClientM
-    , runGitHubNotApiClientM
     , runGitHub'
     , runGitHub
     , AuthToken
@@ -86,17 +82,11 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.ByteString.Lazy as B (toStrict)
 
-import Servant.Client (client, ClientM)
 
 import Crypto.Random (MonadRandom(..))
-import Crypto.JOSE.JWK (JWK)
-import qualified Crypto.JWT as JWT
-import Crypto.JOSE.JWS (Alg(..), newJWSHeader)
-import Crypto.JOSE.Compact (encodeCompact)
 
 import Network.GitHub.API
 import Network.GitHub.Types
-import Network.GitHub.Client
 
 -- $client
 --
@@ -198,35 +188,6 @@ getIssues opts owner repo
             (lookup "sort" opts)
             (lookup "direction" opts)
             (lookup "since" opts)
-
-integrationJWT
-  :: (MonadRandom m, MonadError e m, JWT.AsError e)
-  => JWK
-  -> Int
-  -> UTCTime
-  -> m Text
-integrationJWT key integrationId now' = do
-    let now = posixSecondsToUTCTime . fromInteger . round $ utcTimeToPOSIXSeconds now'
-        claimsSet = JWT.emptyClaimsSet
-          & JWT.claimIss .~ Just (review JWT.string $ show integrationId)
-          & JWT.claimIat .~ Just (JWT.NumericDate now)
-          & JWT.claimExp .~ Just (JWT.NumericDate $ addUTCTime 60 now)
-    signed <- JWT.signClaims key (newJWSHeader ((), RS256)) claimsSet
-    return . T.decodeUtf8 . B.toStrict $ encodeCompact signed
-
-reqInstallationAccessToken
-  :: JWK -> Int -> Int -> Maybe InstallationUser -> ClientM InstallationAccessToken
-reqInstallationAccessToken key integrationId installationId mbUser = do
-    now <- liftIO getCurrentTime
-    jwtEth <- liftIO . runExceptT $ integrationJWT key integrationId now
-    case jwtEth of
-      Left (err :: JWT.Error) -> liftIO . fail $ show err
-      Right jwt ->
-        client (Proxy :: Proxy ReqInstallationAccessToken)
-              installationId
-              (Just "Gorbachev IO")
-              (Just $ "Bearer " <> T.unpack jwt)
-              mbUser
 
 ---- Gist
 -- | Get gists for the authorised user

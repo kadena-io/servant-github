@@ -63,9 +63,6 @@ import qualified Data.List.NonEmpty as NE (NonEmpty(..))
 import qualified Network.HTTP.Media as M ((//))
 
 import Servant.API (JSON, Accept(..), MimeUnrender(..))
-import Data.Swagger
-       (defaultSchemaOptions, ToSchema(..), genericDeclareNamedSchema)
-import qualified Data.Swagger as S (fieldLabelModifier)
 import Data.Char (toLower)
 
 -- | List of results including a total count
@@ -207,9 +204,6 @@ data User = User
     , userEmail       :: Maybe Text
     } deriving (Eq, Show, Generic)
 
-instance ToSchema User where
-    declareNamedSchema = genericDeclareNamedSchema defaultSchemaOptions
-                { S.fieldLabelModifier = map toLower . drop 4 }
 
 instance FromJSON User where
   parseJSON (Object o) =
