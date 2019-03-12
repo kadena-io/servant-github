@@ -71,7 +71,7 @@ data File = File
   , fileRawUrl    :: Text
   , fileType      :: Text
   , fileTruncated :: Maybe Bool
-  , fileLanguage  :: Text
+  , fileLanguage  :: Maybe Text
   } deriving (Show, Eq)
 
 instance FromJSON File where
