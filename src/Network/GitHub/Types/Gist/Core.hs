@@ -72,6 +72,7 @@ data File = File
   , fileType      :: Text
   , fileTruncated :: Maybe Bool
   , fileLanguage  :: Maybe Text
+  , fileContent   :: Text
   } deriving (Show, Eq)
 
 instance FromJSON File where
@@ -81,4 +82,5 @@ instance FromJSON File where
     <*> o .:  "type"
     <*> o .:? "truncated"
     <*> o .:  "language"
+    <*> o .:  "content"
   parseJSON _ = empty
